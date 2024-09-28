@@ -1,5 +1,4 @@
 import { json } from "@remix-run/node";
-import bluebird from "bluebird";
 import { MetaFunction, redirect, useLoaderData } from "@remix-run/react";
 import { getCustomer } from "~/apis/getCustomer";
 import { getCustomerEntity } from "~/apis/getCustomerEntity";
@@ -44,7 +43,7 @@ export async function loader({ request }: { request: Request }) {
   const customer = await getCustomerSelf({ headers });
 
   // Run remaining API requests in parallel
-  const remainingProps = await bluebird.props({
+  const remainingProps = await awaitAll({
     customerExperiments: getCustomerExperiments({ headers }, customer.id),
     customerDeprecated: getCustomer({ headers, cache: true }),
 
@@ -88,6 +87,8 @@ export async function loader({ request }: { request: Request }) {
 
 export default function QuizHello() {
   const data = useLoaderData<typeof loader>();
+
+  // @ts-expect-error -- no ts types for loader yet
   const isBoxBuilderVariant = (data.customerExperiments[146]?.variant ?? 0) > 0;
 
   return (
@@ -111,6 +112,7 @@ function BoxBuilderQuizHello() {
 }
 
 function QuizHouseholdSize() {
+  // @ts-expect-error -- no ts types for loader yet
   const { quiz } = useLoaderData<typeof loader>();
   const [householdSize, setHouseholdSize] = useState(quiz?.household_size ?? 1);
   const [numAdults, setNumAdults] = useState(quiz?.num_adults ?? 1);
@@ -307,5 +309,13 @@ function QuizFooter() {
         Next
       </button>
     </footer>
+  );
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function awaitAll(object: Record<string, Promise<any>>) {
+  const values = await Promise.all(Object.values(object));
+  return Object.fromEntries(
+    Object.keys(object).map((prop, i) => [prop, values[i]])
   );
 }
