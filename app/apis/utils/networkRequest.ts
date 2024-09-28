@@ -1,5 +1,3 @@
-import { createHash } from "node:crypto";
-
 const CACHE_ENABLED = true;
 
 const AUTH_HEADER = "c61de580-e48d-41d2-a8d1-6cd1429987a1";
@@ -77,8 +75,6 @@ export async function networkRequest(payload: NetworkRequestOptions) {
   return json;
 }
 
-const md5 = (str: string) => createHash("md5").update(str).digest("hex");
-
 export const getCacheKey = (options: NetworkRequestOptions) => {
-  return md5(JSON.stringify(options));
+  return JSON.stringify(options);
 };
